@@ -18,5 +18,5 @@ Disallow: /api/
 Disallow: /api/*
 
 # Host & Sitemap
-Sitemap: https://sabari-portfolio.vercel.app/sitemap.xml
+Sitemap: https://personal-portfolio-eight-vert-31.vercel.app/sitemap.xml
 

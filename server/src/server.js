@@ -71,7 +71,7 @@ app.get('/', (req, res) => {
 // Dynamic XML Sitemap for public search engines
 app.get('/sitemap.xml', async (req, res) => {
   try {
-    const baseUrl = allowedOrigins[0] || 'https://sabari-portfolio.vercel.app';
+    const baseUrl = allowedOrigins[0] || 'https://personal-portfolio-eight-vert-31.vercel.app';
     const staticPages = [
       '',
       'about',
@@ -118,7 +118,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
 // Production robots.txt
 app.get('/robots.txt', (req, res) => {
-  const baseUrl = allowedOrigins[0] || 'https://sabari-portfolio.vercel.app';
+  const baseUrl = allowedOrigins[0] || 'https://personal-portfolio-eight-vert-31.vercel.app';
   const robots = `# https://www.robotstxt.org/robotstxt.html\nUser-agent: *\nAllow: /\nDisallow: /api/admin\nDisallow: /api/admin/*\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
   res.header('Content-Type', 'text/plain');
   res.send(robots);

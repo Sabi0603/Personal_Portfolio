@@ -22,11 +22,11 @@ export default function HomePage() {
       '@graph': [
         {
           '@type': 'Person',
-          '@id': 'https://sabari-portfolio.vercel.app/#person',
+          '@id': 'https://personal-portfolio-eight-vert-31.vercel.app/#person',
           name: displayName,
           jobTitle: displayTitle,
           description,
-          url: 'https://sabari-portfolio.vercel.app',
+          url: 'https://personal-portfolio-eight-vert-31.vercel.app',
           sameAs: [
             profile?.socialLinks?.github,
             profile?.socialLinks?.linkedin,
@@ -35,12 +35,12 @@ export default function HomePage() {
         },
         {
           '@type': 'WebSite',
-          '@id': 'https://sabari-portfolio.vercel.app/#website',
-          url: 'https://sabari-portfolio.vercel.app',
+          '@id': 'https://personal-portfolio-eight-vert-31.vercel.app/#website',
+          url: 'https://personal-portfolio-eight-vert-31.vercel.app',
           name: `${displayName} Portfolio`,
           description,
           publisher: {
-            '@id': 'https://sabari-portfolio.vercel.app/#person',
+            '@id': 'https://personal-portfolio-eight-vert-31.vercel.app/#person',
           },
         },
       ],

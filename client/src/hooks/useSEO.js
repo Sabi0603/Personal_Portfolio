@@ -139,7 +139,11 @@ export function useSEO({
     // 6. Open Graph Tags
     const finalOgTitle = ogTitle || fullTitle;
     const finalOgDesc = ogDescription || finalDesc;
-    const defaultOgImage = settings?.ogImage?.url || `${currentOrigin}/SA-logo.svg`;
+    const defaultOgImage =
+      settings?.ogImage?.url ||
+      (currentOrigin
+        ? `${currentOrigin}/og-image.jpg`
+        : 'https://personal-portfolio-eight-vert-31.vercel.app/og-image.jpg');
     const finalOgImage = ogImage || defaultOgImage;
 
     setMetaTag('property', 'og:site_name', siteTitle);
@@ -148,12 +152,23 @@ export function useSEO({
     setMetaTag('property', 'og:type', ogType);
     setMetaTag('property', 'og:url', finalCanonical);
     setMetaTag('property', 'og:image', finalOgImage);
+    setMetaTag('property', 'og:image:secure_url', finalOgImage);
+    if (finalOgImage.endsWith('.png')) {
+      setMetaTag('property', 'og:image:type', 'image/png');
+    } else if (finalOgImage.endsWith('.jpg') || finalOgImage.endsWith('.jpeg')) {
+      setMetaTag('property', 'og:image:type', 'image/jpeg');
+    }
+    setMetaTag('property', 'og:image:width', '1200');
+    setMetaTag('property', 'og:image:height', '630');
+    setMetaTag('property', 'og:image:alt', `${finalAuthor} | ${siteTitle}`);
 
     // 7. Twitter / X Card Tags
     setMetaTag('name', 'twitter:card', twitterCard);
+    setMetaTag('name', 'twitter:url', finalCanonical);
     setMetaTag('name', 'twitter:title', finalOgTitle);
     setMetaTag('name', 'twitter:description', finalOgDesc);
     setMetaTag('name', 'twitter:image', finalOgImage);
+    setMetaTag('name', 'twitter:image:alt', `${finalAuthor} | ${siteTitle}`);
 
     // 8. JSON-LD Structured Data
     let scriptElement = document.getElementById('seo-structured-data');
