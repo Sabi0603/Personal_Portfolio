@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-border-color: var(--border-color);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-card: var(--bg-card);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+}
+
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --border-color: #e2e8f0;
+  --bg-secondary: rgba(255, 255, 255, 0.65);
+  --bg-card: rgba(255, 255, 255, 0.52);
+  --border-color: rgba(226, 232, 240, 0.8);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent-cyan: #06b6d4;
+  --accent-violet: #8b5cf6;
+  --accent-emerald: #10b981;
+}
+
+.dark {
+  --bg-primary: #080b11;
+  --bg-secondary: #0d121d;
+  --bg-card: rgba(15, 23, 42, 0.75);
+  --border-color: #1e293b;
+  --bg-secondary: rgba(13, 18, 29, 0.65);
+  --bg-card: rgba(15, 23, 42, 0.52);
+  --border-color: rgba(30, 41, 59, 0.8);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-cyan: #22d3ee;
+  --accent-violet: #a78bfa;
+  --accent-emerald: #34d399;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Custom Animation Keyframes for Smooth Micro-Interactions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes spinIn90 {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+}
+
+/* Continuous Dual Orbital Particles */
+@keyframes orbitClockwise {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbitCounterClockwise {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@utility animate-fade-in {
+  animation: fadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-zoom-in {
+  animation: zoomIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-slide-in-top {
+  animation: slideInFromTop 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-slide-in-left {
+  animation: slideInFromLeft 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-spin-in {
+  animation: spinIn90 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-orbit-cw {
+  animation: orbitClockwise 12s linear infinite;
+}
+
+@utility animate-orbit-ccw {
+  animation: orbitCounterClockwise 18s linear infinite;
+}
+

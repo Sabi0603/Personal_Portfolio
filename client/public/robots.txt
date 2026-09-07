@@ -1,0 +1,22 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /skills
+Allow: /projects
+Allow: /projects/*
+Allow: /experience
+Allow: /education
+Allow: /certifications
+Allow: /contact
+
+# Disallow private administrative and authentication routes
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /api/
+Disallow: /api/*
+
+# Host & Sitemap
+Sitemap: https://sabari-portfolio.vercel.app/sitemap.xml
+
