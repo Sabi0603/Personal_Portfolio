@@ -37,7 +37,6 @@ export default function AdminProfilePage() {
   const [availableForHire, setAvailableForHire] = useState(true);
   const [yearsOfExperience, setYearsOfExperience] = useState(0);
   const [avatar, setAvatar] = useState(null); // { url, publicId }
-  const [resume, setResume] = useState(null); // { url, publicId, fileName }
 
   // Load existing profile data
   useEffect(() => {
@@ -59,7 +58,6 @@ export default function AdminProfilePage() {
           setAvailableForHire(profile.availableForHire ?? true);
           setYearsOfExperience(profile.yearsOfExperience || 0);
           setAvatar(profile.avatar?.url ? profile.avatar : null);
-          setResume(profile.resume?.url ? profile.resume : null);
         }
       } catch (err) {
         if (isMounted) {
@@ -125,9 +123,6 @@ export default function AdminProfilePage() {
         availableForHire,
         yearsOfExperience: Number(yearsOfExperience) || 0,
         avatar: avatar ? { url: avatar.url, publicId: avatar.publicId || '' } : { url: '', publicId: '' },
-        resume: resume
-          ? { url: resume.url, publicId: resume.publicId || '', fileName: resume.fileName || '' }
-          : { url: '', publicId: '', fileName: '' },
       };
 
       const updated = await updateAdminProfile(payload);
@@ -135,7 +130,6 @@ export default function AdminProfilePage() {
 
       if (updated) {
         setAvatar(updated.avatar?.url ? updated.avatar : null);
-        setResume(updated.resume?.url ? updated.resume : null);
       }
     } catch (err) {
       setErrorMessage(err.message || 'Failed to save profile changes.');
@@ -227,22 +221,23 @@ export default function AdminProfilePage() {
               disabled={saving}
             />
 
-            <div className="space-y-1">
-              <AdminMediaUploader
-                value={resume}
-                onChange={setResume}
-                folder="resume"
-                accept="application/pdf"
-                label="Resume Document (PDF)"
-                helperText="PDF document up to 10 MB"
-                disabled={saving}
-              />
-              <p className="text-[11px] font-mono text-(--text-muted) pt-1">
-                For version history, download, and single-active controls, visit{' '}
-                <Link to="/admin/resume" className="text-cyan-400 hover:underline">
-                  Resume Management
-                </Link>.
-              </p>
+            <div className="p-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 flex flex-col justify-between space-y-3">
+              <div className="space-y-1">
+                <h3 className="text-xs font-mono font-semibold text-cyan-400 uppercase tracking-wider">
+                  Curriculum Vitae / Resume
+                </h3>
+                <p className="text-xs text-(--text-secondary) leading-relaxed">
+                  Resume documents are managed exclusively in the dedicated Resume Management module, featuring upload, versioning, single-active controls, view, and download.
+                </p>
+              </div>
+              <div>
+                <Link
+                  to="/admin/resume"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-xs font-mono font-medium text-cyan-400 transition-colors"
+                >
+                  <span>Manage Resumes &rarr;</span>
+                </Link>
+              </div>
             </div>
           </div>
         </section>

@@ -34,7 +34,7 @@ export default function AboutPage() {
   const aboutText = profile?.about;
   const shortBio = profile?.shortBio;
 
-  const activeResume = resumeData || profile?.resume;
+  const activeResume = resumeData;
   const resumeUrl = activeResume?.url;
   const resumeFileName = activeResume?.fileName || 'Sabari-M-Resume.pdf';
   const resumeViewUrl = getResumeViewUrl();

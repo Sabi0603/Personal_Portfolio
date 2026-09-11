@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
 const skillItemSchema = new mongoose.Schema(
   {
@@ -64,20 +64,6 @@ const profileSchema = new mongoose.Schema(
         default: '',
       },
       publicId: {
-        type: String,
-        default: '',
-      },
-    },
-    resume: {
-      url: {
-        type: String,
-        default: '',
-      },
-      publicId: {
-        type: String,
-        default: '',
-      },
-      fileName: {
         type: String,
         default: '',
       },

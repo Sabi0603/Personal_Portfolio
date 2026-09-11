@@ -1,5 +1,4 @@
 import Resume from '../models/Resume.js';
-import Profile from '../models/Profile.js';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -32,20 +31,6 @@ export const getPublicResume = asyncHandler(async (req, res) => {
     return sendSuccess(res, 'Active resume fetched successfully', resume);
   }
 
-  // Fallback to Profile.resume for legacy backward compatibility
-  const profile = await Profile.findOne().select('resume fullName');
-  if (profile?.resume?.url) {
-    return sendSuccess(res, 'Active resume fetched successfully', {
-      _id: 'legacy-profile-resume',
-      title: `${profile.fullName || 'Sabari M'} - Resume`,
-      fileName: profile.resume.fileName || 'Sabari-M-Resume.pdf',
-      url: profile.resume.url,
-      publicId: profile.resume.publicId || '',
-      format: 'pdf',
-      isActive: true,
-    });
-  }
-
   return sendSuccess(res, 'No active resume found', null);
 });
 
@@ -66,12 +51,6 @@ export const viewPublicResume = asyncHandler(async (req, res) => {
   if (resume && resume.url) {
     resumeUrl = resume.url;
     fileName = resume.fileName || fileName;
-  } else if (!resumeId) {
-    const profile = await Profile.findOne().select('resume fullName');
-    if (profile?.resume?.url) {
-      resumeUrl = profile.resume.url;
-      fileName = profile.resume.fileName || fileName;
-    }
   }
 
   if (!resumeUrl) {
@@ -117,12 +96,6 @@ export const downloadPublicResume = asyncHandler(async (req, res) => {
   if (resume && resume.url) {
     resumeUrl = resume.url;
     fileName = resume.fileName || fileName;
-  } else if (!resumeId) {
-    const profile = await Profile.findOne().select('resume fullName');
-    if (profile?.resume?.url) {
-      resumeUrl = profile.resume.url;
-      fileName = profile.resume.fileName || fileName;
-    }
   }
 
   if (!resumeUrl) {
@@ -200,18 +173,6 @@ export const createResumeAdmin = asyncHandler(async (req, res) => {
     isActive: shouldBeActive,
   });
 
-  if (shouldBeActive) {
-    // Sync with Profile.resume for backward compatibility
-    await Profile.findOneAndUpdate(
-      {},
-      {
-        'resume.url': resume.url,
-        'resume.publicId': resume.publicId,
-        'resume.fileName': resume.fileName,
-      }
-    );
-  }
-
   return sendSuccess(res, 'Resume created successfully', resume, 201);
 });
 
@@ -235,27 +196,8 @@ export const updateResumeAdmin = asyncHandler(async (req, res) => {
       // Deactivate all others
       await Resume.updateMany({ _id: { $ne: id } }, { isActive: false });
       resume.isActive = true;
-
-      // Sync active resume to Profile
-      await Profile.findOneAndUpdate(
-        {},
-        {
-          'resume.url': resume.url,
-          'resume.publicId': resume.publicId,
-          'resume.fileName': resume.fileName,
-        }
-      );
     } else {
       resume.isActive = false;
-      // If deactivating the currently active resume, clear in Profile
-      await Profile.findOneAndUpdate(
-        {},
-        {
-          'resume.url': '',
-          'resume.publicId': '',
-          'resume.fileName': '',
-        }
-      );
     }
   }
 
@@ -279,16 +221,6 @@ export const setActiveResumeAdmin = asyncHandler(async (req, res) => {
   resume.isActive = true;
   await resume.save();
 
-  // Sync to Profile
-  await Profile.findOneAndUpdate(
-    {},
-    {
-      'resume.url': resume.url,
-      'resume.publicId': resume.publicId,
-      'resume.fileName': resume.fileName,
-    }
-  );
-
   return sendSuccess(res, `Resume "${resume.title || resume.fileName}" is now active`, resume);
 });
 
@@ -305,18 +237,6 @@ export const deleteResumeAdmin = asyncHandler(async (req, res) => {
   // Clean up Cloudinary asset
   if (resume.publicId) {
     await destroyCloudinaryAsset(resume.publicId);
-  }
-
-  // If active resume was deleted, clear in Profile
-  if (resume.isActive) {
-    await Profile.findOneAndUpdate(
-      {},
-      {
-        'resume.url': '',
-        'resume.publicId': '',
-        'resume.fileName': '',
-      }
-    );
   }
 
   await Resume.findByIdAndDelete(id);
