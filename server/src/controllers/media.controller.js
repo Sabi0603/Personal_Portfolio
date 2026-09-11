@@ -36,7 +36,9 @@ export const uploadMedia = asyncHandler(async (req, res) => {
     destinationFolder = isPdf ? ALLOWED_FOLDERS.resume : ALLOWED_FOLDERS.projects;
   }
 
-  const resourceType = isPdf ? 'raw' : 'image';
+  // Cloudinary officially supports PDF documents as image assets (resource_type: 'image'),
+  // allowing inline delivery and proper PDF content type.
+  const resourceType = 'image';
 
   // Configure Cloudinary upload options
   const uploadOptions = {
@@ -46,6 +48,10 @@ export const uploadMedia = asyncHandler(async (req, res) => {
     unique_filename: true,
   };
 
+  if (isPdf) {
+    uploadOptions.format = 'pdf';
+  }
+
   // Optimization options for raster images (skip for vector SVG and PDF)
   if (!isPdf && !isSvg) {
     uploadOptions.transformation = [
@@ -53,30 +59,79 @@ export const uploadMedia = asyncHandler(async (req, res) => {
     ];
   }
 
-  // Stream in-memory buffer directly to Cloudinary
-  const result = await new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      uploadOptions,
-      (error, uploadResult) => {
-        if (error) {
-          return reject(error);
+  // Helper to stream in-memory buffer to Cloudinary
+  const uploadToCloudinary = (options) => {
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        options,
+        (error, uploadResult) => {
+          if (error) {
+            return reject(error);
+          }
+          resolve(uploadResult);
         }
-        resolve(uploadResult);
-      }
-    );
+      );
+      uploadStream.end(req.file.buffer);
+    });
+  };
 
-    // Directly pipe in-memory buffer to stream
-    uploadStream.end(req.file.buffer);
-  });
+  let result = await uploadToCloudinary(uploadOptions);
+
+  // If a PDF was uploaded as image, verify if Cloudinary account allows direct PDF image delivery.
+  // If the Cloudinary account restricts PDF image delivery ('deny or ACL failure'),
+  // fallback safely to 'raw' so certificate storage and delivery never break.
+  if (isPdf && result.secure_url) {
+    try {
+      const checkRes = await fetch(result.secure_url, { method: 'HEAD' });
+      if (checkRes.status === 401) {
+        await cloudinary.uploader.destroy(result.public_id, { resource_type: 'image' }).catch(() => {});
+        result = await uploadToCloudinary({
+          folder: destinationFolder,
+          resource_type: 'raw',
+          use_filename: true,
+          unique_filename: true,
+        });
+      }
+    } catch {
+      // Proceed with current result if verification check encounters connection issue
+    }
+  }
+
+  // Generate first-page image preview for PDF documents
+  let previewUrl = '';
+  if (isPdf) {
+    if (result.resource_type === 'image' && result.public_id) {
+      previewUrl = cloudinary.url(result.public_id, {
+        resource_type: 'image',
+        page: 1,
+        format: 'jpg',
+        secure: true,
+      });
+    } else if (result.secure_url) {
+      try {
+        const thumbRes = await cloudinary.uploader.upload(result.secure_url, {
+          folder: `${destinationFolder}/previews`,
+          resource_type: 'image',
+          format: 'jpg',
+          page: 1,
+        });
+        previewUrl = thumbRes.secure_url || thumbRes.url;
+      } catch (err) {
+        console.warn('[mediaController] Failed to generate PDF preview thumbnail:', err.message);
+      }
+    }
+  }
 
   return sendSuccess(
     res,
     'Media uploaded successfully',
     {
       url: result.secure_url || result.url,
+      previewUrl,
       publicId: result.public_id,
       fileName: req.file.originalname,
       format: result.format || (isPdf ? 'pdf' : ''),
+      fileType: isPdf ? 'pdf' : 'image',
       bytes: result.bytes,
       resourceType: result.resource_type,
     },

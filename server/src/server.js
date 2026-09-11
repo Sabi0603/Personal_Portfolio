@@ -9,6 +9,7 @@ import connectDB from './config/db.js';
 import healthRoutes from './routes/health.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import profileRoutes from './routes/profile.routes.js';
+import resumeRoutes from './routes/resume.routes.js';
 import projectRoutes from './routes/project.routes.js';
 import experienceRoutes from './routes/experience.routes.js';
 import educationRoutes from './routes/education.routes.js';
@@ -130,6 +131,7 @@ app.use('/api/auth', authRoutes);
 // Mount Public Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/resume', resumeRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/experience', experienceRoutes);
 app.use('/api/education', educationRoutes);

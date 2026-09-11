@@ -13,6 +13,12 @@ import AdminMediaUploader from '../../components/admin/AdminMediaUploader';
 import AdminConfirmDialog from '../../components/admin/AdminConfirmDialog';
 import Pagination from '../../components/Pagination';
 import {
+  getCertificationViewUrl,
+  getCertificationPreviewUrl,
+  getCertificationDownloadUrl,
+  isPdfCertificate,
+} from '../../services/portfolioService';
+import {
   Award,
   Plus,
   Edit2,
@@ -25,6 +31,7 @@ import {
   Calendar,
   ExternalLink,
   Search,
+  Download,
 } from 'lucide-react';
 
 export default function AdminCertificationsPage() {
@@ -137,7 +144,7 @@ export default function AdminCertificationsPage() {
     setDoesNotExpire(true);
     setCredentialId('');
     setCredentialUrl('');
-    setImage({ url: '', publicId: '' });
+    setImage({ url: '', publicId: '', fileType: 'image', fileName: '' });
     setOrder(certifications.length);
     setFieldErrors({});
     setError('');
@@ -156,9 +163,17 @@ export default function AdminCertificationsPage() {
     setDoesNotExpire(cert.doesNotExpire ?? (cert.expiryDate ? false : true));
     setCredentialId(cert.credentialId || '');
     setCredentialUrl(cert.credentialUrl || '');
+    const isCertPdf =
+      cert.image?.fileType === 'pdf' ||
+      cert.image?.url?.toLowerCase().endsWith('.pdf') ||
+      cert.image?.url?.toLowerCase().includes('.pdf?');
     setImage({
       url: cert.image?.url || '',
       publicId: cert.image?.publicId || '',
+      fileType: isCertPdf ? 'pdf' : 'image',
+      fileName: cert.image?.fileName || '',
+      previewUrl: cert.image?.previewUrl || (isCertPdf ? getCertificationPreviewUrl(cert._id) : ''),
+      viewUrl: isCertPdf ? getCertificationViewUrl(cert._id) : cert.image?.url,
     });
     setOrder(cert.order ?? 0);
     setFieldErrors({});
@@ -169,21 +184,16 @@ export default function AdminCertificationsPage() {
 
   const handleCancelForm = () => {
     cleanupStagedMedia(image);
-    setImage({ url: '', publicId: '' });
     setViewMode('list');
     setEditingId(null);
-    setFieldErrors({});
-    setError('');
   };
 
   const validateForm = () => {
     const errors = {};
     if (!title.trim()) errors.title = 'Title is required';
-    if (!issuer.trim()) errors.issuer = 'Issuing organization is required';
+    if (!issuer.trim()) errors.issuer = 'Issuer is required';
     if (!issueDate) errors.issueDate = 'Issue date is required';
-    if (!doesNotExpire && !expiryDate) {
-      errors.expiryDate = 'Expiry date is required when certification expires';
-    }
+    if (!doesNotExpire && !expiryDate) errors.expiryDate = 'Expiry date is required if credential expires';
     if (credentialUrl.trim() && !credentialUrl.trim().startsWith('http')) {
       errors.credentialUrl = 'Credential URL must start with http:// or https://';
     }
@@ -200,22 +210,37 @@ export default function AdminCertificationsPage() {
     setSuccessMessage('');
 
     try {
-      // 1. Upload staged certificate image if any (deferred Cloudinary upload)
-      let finalImage = { url: '', publicId: '' };
+      // 1. Upload staged certificate media if any (deferred Cloudinary upload)
+      let finalImage = { url: '', publicId: '', fileType: 'image', fileName: '', previewUrl: '' };
       if (image?.isStaged && image?.file) {
         const uploadRes = await uploadMedia(image.file, 'certifications');
         const mediaData = uploadRes?.data?.url ? uploadRes.data : uploadRes;
         if (!mediaData?.url) {
-          throw new Error('Certificate image upload failed to return a valid URL.');
+          throw new Error('Certificate media upload failed to return a valid URL.');
         }
+        const isUploadedPdf =
+          mediaData.fileType === 'pdf' ||
+          mediaData.format === 'pdf' ||
+          image.file.type === 'application/pdf' ||
+          image.file.name.toLowerCase().endsWith('.pdf');
         finalImage = {
           url: mediaData.url,
           publicId: mediaData.publicId || '',
+          fileType: isUploadedPdf ? 'pdf' : 'image',
+          fileName: mediaData.fileName || image.file.name || '',
+          previewUrl: mediaData.previewUrl || '',
         };
       } else if (image?.url && !image?.isStaged) {
+        const isCertPdf =
+          image.fileType === 'pdf' ||
+          image.url.toLowerCase().endsWith('.pdf') ||
+          image.url.toLowerCase().includes('.pdf?');
         finalImage = {
           url: image.url,
           publicId: image.publicId || '',
+          fileType: isCertPdf ? 'pdf' : 'image',
+          fileName: image.fileName || '',
+          previewUrl: image.previewUrl || '',
         };
       }
 
@@ -407,6 +432,8 @@ export default function AdminCertificationsPage() {
                     })
                   : '';
 
+                const isPdfCert = isPdfCertificate(cert);
+
                 return (
                   <div
                     key={cert._id}
@@ -416,11 +443,24 @@ export default function AdminCertificationsPage() {
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-start gap-3">
                           {cert.image?.url ? (
-                            <img
-                              src={cert.image.url}
-                              alt={cert.title}
-                              className="w-12 h-12 rounded-lg object-contain bg-slate-950 p-1 border border-slate-800 shrink-0"
-                            />
+                            isPdfCert ? (
+                              <img
+                                src={cert.image?.previewUrl || getCertificationPreviewUrl(cert._id)}
+                                alt={cert.title}
+                                className="w-12 h-12 rounded-lg object-contain bg-slate-950 p-1 border border-slate-800 shrink-0"
+                                onError={(e) => {
+                                  if (e.target.src !== getCertificationPreviewUrl(cert._id)) {
+                                    e.target.src = getCertificationPreviewUrl(cert._id);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <img
+                                src={cert.image.url}
+                                alt={cert.title}
+                                className="w-12 h-12 rounded-lg object-contain bg-slate-950 p-1 border border-slate-800 shrink-0"
+                              />
+                            )
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400">
                               <Award className="w-6 h-6" />
@@ -461,8 +501,8 @@ export default function AdminCertificationsPage() {
                           </div>
                         )}
 
-                        {cert.credentialUrl && (
-                          <div className="pt-1">
+                        <div className="pt-1 flex flex-wrap items-center gap-3">
+                          {cert.credentialUrl && (
                             <a
                               href={cert.credentialUrl}
                               target="_blank"
@@ -472,8 +512,43 @@ export default function AdminCertificationsPage() {
                               Verify Credential
                               <ExternalLink className="w-3 h-3" />
                             </a>
-                          </div>
-                        )}
+                          )}
+
+                          {cert.image?.url && (
+                            isPdfCert ? (
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={getCertificationViewUrl(cert._id)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+                                >
+                                  View PDF
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                                <span className="text-slate-600">&bull;</span>
+                                <a
+                                  href={getCertificationDownloadUrl(cert._id)}
+                                  className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-2"
+                                  title="Download PDF"
+                                >
+                                  Download
+                                  <Download className="w-3 h-3" />
+                                </a>
+                              </div>
+                            ) : (
+                              <a
+                                href={cert.image.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+                              >
+                                View Image
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -671,21 +746,21 @@ export default function AdminCertificationsPage() {
             </AdminFormField>
           </div>
 
-          {/* Certificate Badge / Image Upload */}
+          {/* Certificate Document / Image Upload */}
           <div className="space-y-2 border-t border-(--border-color) pt-5">
             <label className="text-xs font-mono font-medium text-(--text-secondary) uppercase tracking-wider">
-              Certificate Badge / Image
+              Certificate Document / Image
             </label>
             <p className="text-xs font-mono text-(--text-muted)">
-              Upload the digital badge or certificate preview. Staged file uploads only on Save.
+              Upload the certificate image (JPEG, PNG, WEBP) or official PDF document. Staged file uploads only on Save.
             </p>
             <AdminMediaUploader
               folder="certifications"
-              accept="image/*"
+              accept="image/*,application/pdf"
               value={image}
               onChange={(val) => setImage(val)}
-              label="Upload Certificate Image"
-              helperText="Select certificate or badge image (staged locally, uploaded to Cloudinary only on Save)"
+              label="Certificate Document (Image or PDF)"
+              helperText="Select image (up to 5 MB) or PDF document (up to 10 MB)"
               disabled={saving}
               staged={true}
             />

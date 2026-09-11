@@ -332,5 +332,39 @@ export const deleteAdminSkill = async (id) => {
   return res.data;
 };
 
+// ==========================================
+// RESUME CRUD API
+// ==========================================
+
+export const getAdminResumes = async () => {
+  const res = await api.get('/admin/resumes');
+  return res.data;
+};
+
+export const getAdminResumeById = async (id) => {
+  const res = await api.get(`/admin/resumes/${id}`);
+  return res.data;
+};
+
+export const createAdminResume = async (data) => {
+  const res = await api.post('/admin/resumes', data);
+  return res.data;
+};
+
+export const updateAdminResume = async (id, data) => {
+  const res = await api.put(`/admin/resumes/${id}`, data);
+  return res.data;
+};
+
+export const setActiveAdminResume = async (id) => {
+  const res = await api.patch(`/admin/resumes/${id}/activate`);
+  return res.data;
+};
+
+export const deleteAdminResume = async (id) => {
+  const res = await api.delete(`/admin/resumes/${id}`);
+  return res.data;
+};
+
 
 

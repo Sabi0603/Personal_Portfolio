@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
 const certificationSchema = new mongoose.Schema(
   {
@@ -42,7 +42,22 @@ const certificationSchema = new mongoose.Schema(
         default: '',
         trim: true,
       },
+      previewUrl: {
+        type: String,
+        default: '',
+        trim: true,
+      },
       publicId: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      fileType: {
+        type: String,
+        enum: ['image', 'pdf'],
+        default: 'image',
+      },
+      fileName: {
         type: String,
         default: '',
         trim: true,
@@ -58,6 +73,21 @@ const certificationSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+const inferFileType = function (next) {
+  if (this.image?.url) {
+    const urlLower = this.image.url.toLowerCase();
+    if (!this.image.fileType || this.image.fileType === 'image') {
+      if (urlLower.endsWith('.pdf') || urlLower.includes('.pdf?') || urlLower.includes('/raw/upload/')) {
+        this.image.fileType = 'pdf';
+      }
+    }
+  }
+  if (typeof next === 'function') next();
+};
+
+certificationSchema.pre('validate', inferFileType);
+certificationSchema.pre('save', inferFileType);
 
 certificationSchema.index({ order: 1, issueDate: -1 });
 

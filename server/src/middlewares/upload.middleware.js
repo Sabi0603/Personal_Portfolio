@@ -76,11 +76,16 @@ export const handleSingleUpload = (req, res, next) => {
         const isPdf = ALLOWED_DOC_MIMES.includes(req.file.mimetype) || ext === '.pdf';
         const requestedFolder = (req.body?.folder || req.query?.folder || '').toLowerCase().trim();
 
-        /*
-         * SVG is allowed only for skill icons.
-         * The media controller/route must validate the
-         * requested Cloudinary folder as "skills".
-         */
+        // Resume folder accepts only PDF documents
+        if (requestedFolder === 'resume' && !isPdf) {
+            return sendError(
+                res,
+                'Only PDF documents are allowed for resume uploads.',
+                400,
+            );
+        }
+
+        // SVG is allowed only for skill icons
         if (isSvg && requestedFolder !== 'skills') {
             return sendError(
                 res,
@@ -88,6 +93,16 @@ export const handleSingleUpload = (req, res, next) => {
                 400,
             );
         }
+
+        // PDF is allowed only for resume and certifications
+        if (isPdf && requestedFolder !== 'resume' && requestedFolder !== 'certifications') {
+            return sendError(
+                res,
+                'PDF files are only allowed for resume and certifications.',
+                400,
+            );
+        }
+
         // Images and SVG skill icons: max 5 MB
         if ((isImage || isSvg) && req.file.size > 5 * 1024 * 1024) {
             return sendError(
@@ -96,11 +111,12 @@ export const handleSingleUpload = (req, res, next) => {
                 400,
             );
         }
-        // PDF resume: max 10 MB
+
+        // PDF documents: max 10 MB
         if (isPdf && req.file.size > 10 * 1024 * 1024) {
             return sendError(
                 res,
-                "PDF document file size exceeds the 10 MB maximum limit.",
+                'PDF document file size exceeds the 10 MB maximum limit.',
                 400,
             );
         }

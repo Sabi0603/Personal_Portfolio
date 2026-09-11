@@ -8,6 +8,7 @@ import SocialLink from './SocialLink.js';
 import ContactMessage from './ContactMessage.js';
 import SiteSettings from './SiteSettings.js';
 import Skill from './Skill.js';
+import Resume from './Resume.js';
 
 export {
   Admin,
@@ -20,6 +21,7 @@ export {
   ContactMessage,
   SiteSettings,
   Skill,
+  Resume,
 };
 
 export default {
@@ -33,4 +35,5 @@ export default {
   ContactMessage,
   SiteSettings,
   Skill,
+  Resume,
 };

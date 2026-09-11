@@ -13,11 +13,13 @@ import {
   KeyRound,
   Shield,
   X,
+  FileText,
 } from 'lucide-react';
 
 const ADMIN_NAV_ITEMS = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { path: '/admin/profile', label: 'Profile', icon: User },
+  { path: '/admin/resume', label: 'Resume', icon: FileText },
   { path: '/admin/skills', label: 'Skills', icon: Sparkles },
   { path: '/admin/projects', label: 'Projects', icon: FolderGit2 },
   { path: '/admin/experience', label: 'Experience', icon: Briefcase },

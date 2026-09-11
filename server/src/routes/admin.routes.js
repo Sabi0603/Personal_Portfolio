@@ -8,6 +8,15 @@ import {
 } from '../controllers/profile.controller.js';
 
 import {
+  getAllResumesAdmin,
+  getResumeByIdAdmin,
+  createResumeAdmin,
+  updateResumeAdmin,
+  setActiveResumeAdmin,
+  deleteResumeAdmin,
+} from '../controllers/resume.controller.js';
+
+import {
   getAllProjectsAdmin,
   getProjectByIdAdmin,
   createProject,
@@ -79,6 +88,19 @@ router.use(protectAdmin);
 router.route('/profile')
   .get(getAdminProfile)
   .put(updateProfile);
+
+// --- Resume Management Routes ---
+router.route('/resumes')
+  .get(getAllResumesAdmin)
+  .post(createResumeAdmin);
+
+router.route('/resumes/:id')
+  .get(getResumeByIdAdmin)
+  .put(updateResumeAdmin)
+  .delete(deleteResumeAdmin);
+
+router.route('/resumes/:id/activate')
+  .patch(setActiveResumeAdmin);
 
 // --- Project Routes ---
 router.route('/projects')

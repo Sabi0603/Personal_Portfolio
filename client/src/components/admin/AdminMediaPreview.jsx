@@ -2,7 +2,9 @@ import { FileText, ExternalLink, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminMediaPreview({
   url,
+  previewUrl,
   fileName,
+  viewUrl,
   isPdf = false,
   isAvatar = false,
   alt = 'Media preview',
@@ -12,23 +14,38 @@ export default function AdminMediaPreview({
   if (isPdf) {
     return (
       <div className="flex items-center gap-3 p-3.5 rounded-xl border border-(--border-color) bg-(--bg-card)">
-        <div className="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
-          <FileText className="w-5 h-5" />
-        </div>
+        {previewUrl ? (
+          <img
+            src={previewUrl}
+            alt={alt}
+            className="w-12 h-14 rounded-lg object-contain bg-slate-950 p-0.5 border border-(--border-color) shrink-0 shadow-xs"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5" />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <p className="text-xs font-mono font-medium text-(--text-primary) truncate">
             {fileName || 'document.pdf'}
           </p>
-          <p className="text-[11px] font-mono text-(--text-muted)">PDF Document</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 uppercase font-semibold">
+              PDF
+            </span>
+            <span className="text-[11px] font-mono text-(--text-muted)">
+              {previewUrl ? 'Visual Preview' : 'Document Preview'}
+            </span>
+          </div>
         </div>
         <a
-          href={url}
+          href={viewUrl || url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-(--border-color) bg-(--bg-primary) hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono text-cyan-600 dark:text-cyan-400 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-(--border-color) bg-(--bg-primary) hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono text-cyan-600 dark:text-cyan-400 transition-colors shrink-0"
         >
-          <span>View</span>
-          <ExternalLink className="w-3 h-3" />
+          <span>View Document</span>
+          <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>
     );

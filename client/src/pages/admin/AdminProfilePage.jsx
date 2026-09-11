@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { getAdminProfile, updateAdminProfile } from '../../services/adminService';
 import AdminFormField from '../../components/admin/AdminFormField';
@@ -226,15 +227,23 @@ export default function AdminProfilePage() {
               disabled={saving}
             />
 
-            <AdminMediaUploader
-              value={resume}
-              onChange={setResume}
-              folder="resume"
-              accept="application/pdf"
-              label="Resume Document (PDF)"
-              helperText="PDF document up to 10 MB"
-              disabled={saving}
-            />
+            <div className="space-y-1">
+              <AdminMediaUploader
+                value={resume}
+                onChange={setResume}
+                folder="resume"
+                accept="application/pdf"
+                label="Resume Document (PDF)"
+                helperText="PDF document up to 10 MB"
+                disabled={saving}
+              />
+              <p className="text-[11px] font-mono text-(--text-muted) pt-1">
+                For version history, download, and single-active controls, visit{' '}
+                <Link to="/admin/resume" className="text-cyan-400 hover:underline">
+                  Resume Management
+                </Link>.
+              </p>
+            </div>
           </div>
         </section>
 

@@ -26,6 +26,7 @@ import AdminResetPasswordPage from './pages/auth/AdminResetPasswordPage';
 // Admin Protected Pages (Steps 4-6)
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProfilePage from './pages/admin/AdminProfilePage';
+import AdminResumePage from './pages/admin/AdminResumePage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AdminChangePasswordPage from './pages/admin/AdminChangePasswordPage';
 
@@ -80,6 +81,7 @@ function App() {
               >
                 <Route index element={<AdminDashboard />} />
                 <Route path="profile" element={<AdminProfilePage />} />
+                <Route path="resume" element={<AdminResumePage />} />
                 <Route path="skills" element={<AdminSkillsPage />} />
                 <Route path="projects" element={<AdminProjectsPage />} />
                 <Route path="experience" element={<AdminExperiencePage />} />

@@ -33,13 +33,18 @@ export default function AdminMediaUploader({
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const isPdf = accept === 'application/pdf' || folder === 'resume';
-  const maxSizeBytes = isPdf ? MAX_PDF_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
-  const maxSizeLabel = isPdf ? '10 MB' : '5 MB';
+  const allowsPdf = folder === 'resume' || folder === 'certifications' || accept.includes('application/pdf') || accept.includes('.pdf');
+  const allowsImages = folder !== 'resume';
+  const isPdfOnly = folder === 'resume' || (accept === 'application/pdf' && folder !== 'certifications');
+
+  const maxSizeLabel = isPdfOnly
+    ? '10 MB'
+    : allowsPdf && allowsImages
+    ? 'Img: 5MB / PDF: 10MB'
+    : '5 MB';
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
-    // Reset file input value so re-selecting same file triggers change
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -49,28 +54,44 @@ export default function AdminMediaUploader({
     setErrorMessage('');
 
     const ext = (file.name ? file.name.slice(file.name.lastIndexOf('.')) : '').toLowerCase();
+    const isFilePdf = ALLOWED_PDF_TYPES.includes(file.type) || ext === '.pdf';
     const isSvg = file.type === 'image/svg+xml' || ext === '.svg';
 
-    // MIME type & format validation
-    if (isPdf) {
-      if (!ALLOWED_PDF_TYPES.includes(file.type) && ext !== '.pdf') {
-        setErrorMessage('Invalid file format. Only PDF documents are allowed.');
+    // Format & folder-specific validations
+    if (isFilePdf) {
+      if (!allowsPdf) {
+        setErrorMessage('PDF documents are not allowed for this section.');
         return;
       }
-    } else if (folder === 'skills') {
-      const isValidSkill =
-        ALLOWED_SKILL_IMAGE_TYPES.includes(file.type) ||
-        isSvg ||
-        ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
-      if (!isValidSkill) {
-        setErrorMessage('Invalid image format. Allowed formats: JPEG, PNG, WEBP, SVG.');
+      if (file.size > MAX_PDF_SIZE_BYTES) {
+        setErrorMessage('PDF document exceeds the maximum limit of 10 MB.');
         return;
       }
-    } else {
-      if (isSvg) {
+    } else if (isPdfOnly) {
+      setErrorMessage('Invalid file format. Only PDF documents are allowed.');
+      return;
+    } else if (isSvg) {
+      if (folder !== 'skills') {
         setErrorMessage('SVG files are only allowed for skill icons.');
         return;
       }
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        setErrorMessage('SVG file exceeds the maximum limit of 5 MB.');
+        return;
+      }
+    } else if (folder === 'skills') {
+      const isValidSkillImage =
+        ALLOWED_SKILL_IMAGE_TYPES.includes(file.type) ||
+        ['.jpg', '.jpeg', '.png', '.webp', '.svg'].includes(ext);
+      if (!isValidSkillImage) {
+        setErrorMessage('Invalid image format. Allowed formats: JPEG, PNG, WEBP, SVG.');
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        setErrorMessage('Image file exceeds the maximum limit of 5 MB.');
+        return;
+      }
+    } else {
       const isValidImage =
         ALLOWED_STANDARD_IMAGE_TYPES.includes(file.type) ||
         ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
@@ -78,12 +99,10 @@ export default function AdminMediaUploader({
         setErrorMessage('Invalid image format. Allowed formats: JPEG, PNG, WEBP.');
         return;
       }
-    }
-
-    // File size validation
-    if (file.size > maxSizeBytes) {
-      setErrorMessage(`File exceeds the maximum limit of ${maxSizeLabel}.`);
-      return;
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        setErrorMessage('Image file exceeds the maximum limit of 5 MB.');
+        return;
+      }
     }
 
     // STAGED MODE: Local preview only, no remote upload yet
@@ -101,6 +120,7 @@ export default function AdminMediaUploader({
         previewUrl,
         url: previewUrl,
         fileName: file.name,
+        fileType: isFilePdf ? 'pdf' : 'image',
         isStaged: true,
       });
       return;
@@ -111,7 +131,6 @@ export default function AdminMediaUploader({
     try {
       const result = await uploadMedia(file, folder);
 
-      // Safe extraction supporting both direct asset payload and nested data payload
       const media = result?.data?.url ? result.data : result;
 
       if (media?.url) {
@@ -119,6 +138,9 @@ export default function AdminMediaUploader({
           url: media.url,
           publicId: media.publicId || '',
           fileName: media.fileName || file.name,
+          fileType: media.fileType || (isFilePdf ? 'pdf' : 'image'),
+          bytes: media.bytes || file.size || 0,
+          format: media.format || (isFilePdf ? 'pdf' : ''),
         });
       } else {
         throw new Error('Upload succeeded but no asset URL was returned.');
@@ -149,6 +171,13 @@ export default function AdminMediaUploader({
   const mediaFileName = typeof value === 'object' ? value?.fileName : '';
   const isStaged = typeof value === 'object' && Boolean(value?.isStaged);
   const hasMedia = Boolean(mediaUrl);
+
+  const isValuePdf =
+    value?.fileType === 'pdf' ||
+    value?.format === 'pdf' ||
+    (typeof value?.url === 'string' && (value.url.toLowerCase().endsWith('.pdf') || value.url.toLowerCase().includes('.pdf?'))) ||
+    (typeof value?.fileName === 'string' && value.fileName.toLowerCase().endsWith('.pdf')) ||
+    isPdfOnly;
 
   return (
     <div className="space-y-3">
@@ -190,8 +219,10 @@ export default function AdminMediaUploader({
         <div className="space-y-3">
           <AdminMediaPreview
             url={mediaUrl}
+            previewUrl={value?.previewUrl}
+            viewUrl={typeof value === 'object' ? (value?.viewUrl || value?.url) : undefined}
             fileName={mediaFileName}
-            isPdf={isPdf}
+            isPdf={isValuePdf}
             isAvatar={isAvatar}
           />
 
@@ -251,22 +282,30 @@ export default function AdminMediaUploader({
           ) : (
             <>
               <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 flex items-center justify-center">
-                {isPdf ? (
+                {isPdfOnly ? (
                   <FileText className="w-5 h-5" />
                 ) : isAvatar ? (
                   <ImageIcon className="w-5 h-5" />
+                ) : allowsPdf && allowsImages ? (
+                  <FileText className="w-5 h-5" />
                 ) : (
                   <UploadCloud className="w-5 h-5" />
                 )}
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-mono font-medium text-(--text-primary)">
-                  Click to select {isPdf ? 'PDF document' : 'image'}
+                  {isPdfOnly
+                    ? 'Click to select PDF document'
+                    : allowsPdf && allowsImages
+                    ? 'Click to select image or PDF certificate'
+                    : 'Click to select image'}
                 </p>
                 <p className="text-[11px] font-mono text-(--text-muted)">
                   {helperText ||
-                    (isPdf
+                    (isPdfOnly
                       ? 'PDF file up to 10 MB'
+                      : allowsPdf && allowsImages
+                      ? 'JPEG, PNG, WEBP up to 5 MB or PDF up to 10 MB'
                       : 'JPEG, PNG, SVG or WEBP up to 5 MB')}
                 </p>
               </div>

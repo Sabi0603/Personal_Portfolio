@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useFetch } from '../../hooks/useFetch';
 import { useSEO } from '../../hooks/useSEO';
-import { getProfile } from '../../services/portfolioService';
+import {
+  getProfile,
+  getResume,
+  getResumeViewUrl,
+  getResumeDownloadUrl,
+} from '../../services/portfolioService';
 import { downloadFileFromUrl } from '../../utils/downloadHelper';
 import SectionHeader from '../../components/SectionHeader';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import ErrorState from '../../components/ErrorState';
 import EmptyState from '../../components/EmptyState';
 import {
-  FileText,
   Loader2,
   MapPin,
   Mail,
@@ -16,16 +20,25 @@ import {
   Briefcase,
   UserCheck,
   User,
+  ExternalLink,
+  Download,
+  Eye,
 } from 'lucide-react';
 
 export default function AboutPage() {
   const { data: profile, loading, error, refetch } = useFetch(getProfile);
+  const { data: resumeData } = useFetch(getResume);
 
   const fullName = profile?.fullName || 'Sabari M';
   const title = profile?.title || 'MERN Stack Developer';
   const aboutText = profile?.about;
   const shortBio = profile?.shortBio;
-  const resumeUrl = profile?.resume?.url;
+
+  const activeResume = resumeData || profile?.resume;
+  const resumeUrl = activeResume?.url;
+  const resumeFileName = activeResume?.fileName || 'Sabari-M-Resume.pdf';
+  const resumeViewUrl = getResumeViewUrl();
+  const resumeDownloadUrl = getResumeDownloadUrl();
 
   const [downloading, setDownloading] = useState(false);
 
@@ -34,10 +47,10 @@ export default function AboutPage() {
     if (!resumeUrl || downloading) return;
     setDownloading(true);
     try {
-      await downloadFileFromUrl(resumeUrl, 'Sabari-M-Resume.pdf');
+      await downloadFileFromUrl(resumeUrl, resumeFileName);
     } catch (err) {
       console.error('Error initiating resume download:', err);
-      window.location.href = '/api/profile/resume/download';
+      window.location.href = resumeDownloadUrl;
     } finally {
       setDownloading(false);
     }
@@ -125,27 +138,39 @@ export default function AboutPage() {
               )}
             </div>
 
-            {/* Resume Action - only rendered if real resume URL exists */}
+            {/* Resume Actions - View + Download */}
             {resumeUrl && (
-              <a
-                href="/api/profile/resume/download"
-                onClick={handleDownloadResume}
-                download="Sabari-M-Resume.pdf"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-colors shadow-sm cursor-pointer disabled:opacity-75"
-                aria-disabled={downloading}
-              >
-                {downloading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Downloading...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-4 h-4" />
-                    <span>Download Resume (PDF)</span>
-                  </>
-                )}
-              </a>
+              <div className="pt-2 space-y-2.5">
+                <a
+                  href={resumeViewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shadow-sm cursor-pointer"
+                >
+                  <Eye className="w-4 h-4 text-cyan-400" />
+                  <span>View Resume</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadResume}
+                  disabled={downloading}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-colors shadow-sm cursor-pointer disabled:opacity-75"
+                >
+                  {downloading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Downloading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span>Download Resume (PDF)</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
 
